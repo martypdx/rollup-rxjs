@@ -2,11 +2,14 @@ const rollup = require( 'rollup' );
 const nodeResolve = require( 'rollup-plugin-node-resolve' );
 const commonjs = require( 'rollup-plugin-commonjs' );
 
-// found this online, does correctly rewrite the rxjs paths
+// found this online, it does seem to correctly rewrite the rxjs paths
+// but is it helping or hurting?
 class RollupRx {
-	constructor(options){
+	
+	constructor( options ){
 		this.options = options;
 	}
+
 	resolveId( id ){
 		if(id.startsWith('rxjs/')){
 			return `${__dirname}/node_modules/rxjs-es/${id.replace('rxjs/', '')}.js`;
@@ -18,15 +21,14 @@ const rollupRx = config => new RollupRx( config );
 
 rollup.rollup({
 	entry: 'index.js',
-	// have no idea which of these might be helpful...
 	plugins: [
-		nodeResolve({ main: true, jsnext: true }),
-		commonjs({ include: 'node_modules/**' }),
-		rollupRx,
+		rollupRx(),
+		nodeResolve({ jsnext: true, main: true }),
+		// commonjs({ include: 'node_modules/**' }),
 	]
 }).then( bundle => {
 	bundle.write({
 		format: 'iife',
 		dest: 'bundle.js'
 	});
-});
+}).catch( err => console.error( err ) );
