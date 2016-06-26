@@ -1,6 +1,5 @@
 const rollup = require( 'rollup' );
 const nodeResolve = require( 'rollup-plugin-node-resolve' );
-const commonjs = require( 'rollup-plugin-commonjs' );
 
 // found this online, it does seem to correctly rewrite the rxjs paths
 // but is it helping or hurting?
@@ -23,8 +22,8 @@ rollup.rollup({
 	entry: 'index.js',
 	plugins: [
 		rollupRx(),
+		// commonjs({ include: 'node_modules/symbol-observable' }),
 		nodeResolve({ jsnext: true, main: true }),
-		// commonjs({ include: 'node_modules/**' }),
 	]
 }).then( bundle => {
 	bundle.write({

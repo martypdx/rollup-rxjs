@@ -462,11 +462,36 @@ ${errors.map((err, i) => `${i + 1}) ${err.toString()}`).join('\n')}` : '';
       return new Subscriber(nextOrObserver, error, complete);
   }
 
-  module.exports = require('./ponyfill')(global || window || undefined);
+  function symbolObservablePonyfill(root) {
+  	var result;
+  	var Symbol = root.Symbol;
+
+  	if (typeof Symbol === 'function') {
+  		if (Symbol.observable) {
+  			result = Symbol.observable;
+  		} else {
+  			result = Symbol('observable');
+  			Symbol.observable = result;
+  		}
+  	} else {
+  		result = '@@observable';
+  	}
+
+  	return result;
+  };
+
+  var root$1 = undefined;
+  if (typeof global !== 'undefined') {
+  	root$1 = global;
+  } else if (typeof window !== 'undefined') {
+  	root$1 = window;
+  }
+
+  var result = symbolObservablePonyfill(root$1);
 
 
   var $$observable = Object.freeze({
-
+  	default: result
   });
 
   /**
