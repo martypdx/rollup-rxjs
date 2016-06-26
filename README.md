@@ -2,7 +2,7 @@
 
 Sample bundling project for rolling up rxjs
 
-Things are currently working _if_ extraneous older version of 
+Currents works _if_ extraneous older version of 
 `symbol-observable` is removed from `rxjs-es`:
 
 ```
@@ -10,13 +10,13 @@ Things are currently working _if_ extraneous older version of
 > rm -rf node_modules/rxjs-es/node_modules
 ```
 
-Then build with:
+build with:
 
 ```
 > node rollup.js
 ```
 
-And run:
+then run:
 
 ```
 > node bundle.js
