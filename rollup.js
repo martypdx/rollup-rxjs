@@ -22,7 +22,6 @@ rollup.rollup({
 	entry: 'index.js',
 	plugins: [
 		rollupRx(),
-		// commonjs({ include: 'node_modules/symbol-observable' }),
 		nodeResolve({ jsnext: true, main: true }),
 	]
 }).then( bundle => {
