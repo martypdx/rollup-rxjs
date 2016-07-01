@@ -627,12 +627,237 @@ ${errors.map((err, i) => `${i + 1}) ${err.toString()}`).join('\n')}` : '';
       return new Observable(subscribe);
   };
 
+  /**
+   * An error thrown when an action is invalid because the object has been
+   * unsubscribed.
+   *
+   * @see {@link Subject}
+   * @see {@link BehaviorSubject}
+   *
+   * @class ObjectUnsubscribedError
+   */
+  class ObjectUnsubscribedError extends Error {
+      constructor() {
+          super('object unsubscribed');
+          this.name = 'ObjectUnsubscribedError';
+      }
+  }
+
+  /**
+   * We need this JSDoc comment for affecting ESDoc.
+   * @ignore
+   * @extends {Ignored}
+   */
+  class SubjectSubscription extends Subscription {
+      constructor(subject, subscriber) {
+          super();
+          this.subject = subject;
+          this.subscriber = subscriber;
+          this.isUnsubscribed = false;
+      }
+      unsubscribe() {
+          if (this.isUnsubscribed) {
+              return;
+          }
+          this.isUnsubscribed = true;
+          const subject = this.subject;
+          const observers = subject.observers;
+          this.subject = null;
+          if (!observers || observers.length === 0 || subject.isStopped || subject.isUnsubscribed) {
+              return;
+          }
+          const subscriberIndex = observers.indexOf(this.subscriber);
+          if (subscriberIndex !== -1) {
+              observers.splice(subscriberIndex, 1);
+          }
+      }
+  }
+
+  /**
+   * @class SubjectSubscriber<T>
+   */
+  class SubjectSubscriber extends Subscriber {
+      constructor(destination) {
+          super(destination);
+          this.destination = destination;
+      }
+  }
+  /**
+   * @class Subject<T>
+   */
+  class Subject extends Observable {
+      constructor() {
+          super();
+          this.observers = [];
+          this.isUnsubscribed = false;
+          this.isStopped = false;
+          this.hasError = false;
+          this.thrownError = null;
+      }
+      [$$rxSubscriber]() {
+          return new SubjectSubscriber(this);
+      }
+      lift(operator) {
+          const subject = new AnonymousSubject(this, this);
+          subject.operator = operator;
+          return subject;
+      }
+      next(value) {
+          if (this.isUnsubscribed) {
+              throw new ObjectUnsubscribedError();
+          }
+          if (!this.isStopped) {
+              const { observers } = this;
+              const len = observers.length;
+              const copy = observers.slice();
+              for (let i = 0; i < len; i++) {
+                  copy[i].next(value);
+              }
+          }
+      }
+      error(err) {
+          if (this.isUnsubscribed) {
+              throw new ObjectUnsubscribedError();
+          }
+          this.hasError = true;
+          this.thrownError = err;
+          this.isStopped = true;
+          const { observers } = this;
+          const len = observers.length;
+          const copy = observers.slice();
+          for (let i = 0; i < len; i++) {
+              copy[i].error(err);
+          }
+          this.observers.length = 0;
+      }
+      complete() {
+          if (this.isUnsubscribed) {
+              throw new ObjectUnsubscribedError();
+          }
+          this.isStopped = true;
+          const { observers } = this;
+          const len = observers.length;
+          const copy = observers.slice();
+          for (let i = 0; i < len; i++) {
+              copy[i].complete();
+          }
+          this.observers.length = 0;
+      }
+      unsubscribe() {
+          this.isStopped = true;
+          this.isUnsubscribed = true;
+          this.observers = null;
+      }
+      _subscribe(subscriber) {
+          if (this.isUnsubscribed) {
+              throw new ObjectUnsubscribedError();
+          }
+          else if (this.hasError) {
+              subscriber.error(this.thrownError);
+              return Subscription.EMPTY;
+          }
+          else if (this.isStopped) {
+              subscriber.complete();
+              return Subscription.EMPTY;
+          }
+          else {
+              this.observers.push(subscriber);
+              return new SubjectSubscription(this, subscriber);
+          }
+      }
+      asObservable() {
+          const observable = new Observable();
+          observable.source = this;
+          return observable;
+      }
+  }
+  Subject.create = (destination, source) => {
+      return new AnonymousSubject(destination, source);
+  };
+  /**
+   * @class AnonymousSubject<T>
+   */
+  class AnonymousSubject extends Subject {
+      constructor(destination, source) {
+          super();
+          this.destination = destination;
+          this.source = source;
+      }
+      next(value) {
+          const { destination } = this;
+          if (destination && destination.next) {
+              destination.next(value);
+          }
+      }
+      error(err) {
+          const { destination } = this;
+          if (destination && destination.error) {
+              this.destination.error(err);
+          }
+      }
+      complete() {
+          const { destination } = this;
+          if (destination && destination.complete) {
+              this.destination.complete();
+          }
+      }
+      _subscribe(subscriber) {
+          const { source } = this;
+          if (source) {
+              return this.source.subscribe(subscriber);
+          }
+          else {
+              return Subscription.EMPTY;
+          }
+      }
+  }
+
+  function throwError(e) { throw e; }
+
+  /**
+   * @class BehaviorSubject<T>
+   */
+  class BehaviorSubject extends Subject {
+      constructor(_value) {
+          super();
+          this._value = _value;
+      }
+      getValue() {
+          if (this.hasError) {
+              throwError(this.thrownError);
+          }
+          else if (this.isUnsubscribed) {
+              throwError(new ObjectUnsubscribedError());
+          }
+          else {
+              return this._value;
+          }
+      }
+      get value() {
+          return this.getValue();
+      }
+      _subscribe(subscriber) {
+          const subscription = super._subscribe(subscriber);
+          if (subscription && !subscription.isUnsubscribed) {
+              subscriber.next(this._value);
+          }
+          return subscription;
+      }
+      next(value) {
+          super.next(this._value = value);
+      }
+  }
+
   const observable = Observable.create( observer => {
     observer.next(1);
     setTimeout(() => {
       observer.complete();
     }, 1000);
   });
+
+  const x = new BehaviorSubject( 5 );
+  x.subscribe( x => console.log( 'x is', x ) );
+  x.next( 3 );
 
   observable.subscribe( x => console.log('got value ' + x) );
 

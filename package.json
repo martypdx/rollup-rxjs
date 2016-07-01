@@ -4,7 +4,7 @@
   "description": "sample project rolling up rxjs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "gobble build -f dist"
   },
   "repository": {
     "type": "git",
@@ -21,6 +21,9 @@
     "symbol-observable": "^1.0.1"
   },
   "devDependencies": {
+    "gobble": "^0.11.3",
+    "gobble-cli": "^0.7.0",
+    "gobble-rollup": "^0.33.0",
     "rollup": "^0.33.0",
     "rollup-plugin-node-resolve": "^1.7.1"
   }
