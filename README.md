@@ -4,11 +4,12 @@ Sample bundling project for rolling up rxjs
 
 Until next beta release, RxJs won't work correctly due to dependency on non-ES5 module.
 
-However, you can work around _if_ older version of 
-`symbol-observable` is removed from `rxjs-es`:
+However, you can work around by:
+* Including a stand-alone `symbol-observable` dependency (latest is `1.0.1`) in your project
+* removing older version of `symbol-observable` from `rxjs-es` after install
 
 ```
-> npm i //includes new stand-alone `symbol-observable` dependency
+> npm i 
 > rm -rf node_modules/rxjs-es/node_modules
 ```
 
