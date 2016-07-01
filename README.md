@@ -1,8 +1,8 @@
 # rollup-rxjs
 
-Sample bundling project for rolling up rxjs
+Sample bundling project for rolling up your code that depends on [rxjs](https://github.com/ReactiveX/rxjs)
 
-Until next beta release, RxJs won't work correctly due to dependency on non-ES5 module.
+[Until next beta release](https://github.com/ReactiveX/rxjs/issues/1785), rxjs won't work correctly due to dependency on non-ES6 module.
 
 However, you can work around by:
 * Including a stand-alone `symbol-observable` dependency (latest is `1.0.1`) in your project
